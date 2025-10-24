@@ -76,38 +76,34 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          pageUrl: pageUrl
+          url: pageUrl  // Send the URL the user entered
         })
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        
-        // Complete AI generation step
-        updateStepStatus(3, 'completed')
-        updateStepStatus(4, 'active')
-        setCurrentStep(4)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
 
-        // Complete upload step after a delay
-        setTimeout(() => {
-          updateStepStatus(4, 'completed')
-          setProgressPercentage(100)
-          setResult(data)
-          setShowResults(true)
-          setIsProcessing(false)
-        }, 1500)
-      } else {
-        const errorData = await response.json().catch(() => ({}))
-        const errorMessage = errorData.message || 'Failed to process request. Please check the URL and try again.'
-        updateStepStatus(3, 'error')
-        setError(errorMessage)
+      const data = await response.json()
+      console.log('Success:', data)
+      
+      // Complete AI generation step
+      updateStepStatus(3, 'completed')
+      updateStepStatus(4, 'active')
+      setCurrentStep(4)
+
+      // Complete upload step after a delay
+      setTimeout(() => {
+        updateStepStatus(4, 'completed')
+        setProgressPercentage(100)
+        setResult(data)
         setShowResults(true)
         setIsProcessing(false)
-      }
+      }, 1500)
     } catch (err) {
       console.error('Error:', err)
       updateStepStatus(3, 'error')
-      setError('Network error occurred. Please check your connection and try again.')
+      setError('Failed to process your request. Please check the URL and try again.')
       setShowResults(true)
       setIsProcessing(false)
     }
