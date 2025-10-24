@@ -1,4 +1,4 @@
-export const WEBHOOK_URL = 'https://lonejavid.app.n8n.cloud/form/2fda4bb8-1bfa-46ed-a766-fc14e1204d03'
+export const WEBHOOK_URL = 'https://lonejavid.app.n8n.cloud/webhook/generate-video'
 
 export const STEPS = [
   {
