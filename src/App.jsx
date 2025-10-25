@@ -138,25 +138,48 @@ function App() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout for initial request
       
+      const requestBody = {
+        url: pageUrl  // Send the URL the user entered
+      }
+      
+      console.log('🚀 Sending request to n8n...')
+      console.log('📍 Webhook URL:', WEBHOOK_URL)
+      console.log('📦 Request body:', requestBody)
+      
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          url: pageUrl  // Send the URL the user entered
-        }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal
       })
+      
+      console.log('📥 Response status:', response.status)
+      console.log('📥 Response headers:', [...response.headers.entries()])
 
       clearTimeout(timeoutId)
 
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ Response not OK:', response.status, errorText)
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const data = await response.json()
-      console.log('Initial response:', data)
+      // Get the response text first to see what we're getting
+      const responseText = await response.text()
+      console.log('📥 Raw response text:', responseText)
+      
+      // Try to parse it as JSON
+      let data
+      try {
+        data = JSON.parse(responseText)
+        console.log('✅ Parsed JSON data:', data)
+      } catch (jsonError) {
+        console.error('❌ Failed to parse JSON:', jsonError)
+        console.error('❌ Response was:', responseText)
+        throw new Error('Invalid JSON response from server')
+      }
       
       // Check if we got a requestId
       if (data.requestId) {
