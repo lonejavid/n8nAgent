@@ -128,9 +128,9 @@ function App() {
     simulateProgress()
 
     try {
-      // Create abort controller for timeout (10 minutes max)
+      // 2 minute timeout for scraping + starting video generation
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
+      const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minutes
       
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
@@ -152,23 +152,18 @@ function App() {
       const data = await response.json()
       console.log('Success:', data)
       
-      // If we got a taskId, start polling for status
-      if (data.taskId) {
-        pollVideoStatus(data.taskId, CHECK_STATUS_URL)
-      } else {
-        // Old flow - immediate result
-        updateStepStatus(3, 'completed')
-        updateStepStatus(4, 'active')
-        setCurrentStep(4)
-
-        setTimeout(() => {
-          updateStepStatus(4, 'completed')
-          setProgressPercentage(100)
-          setResult(data)
-          setShowResults(true)
-          setIsProcessing(false)
-        }, 1500)
-      }
+      // Complete all steps
+      updateStepStatus(3, 'completed')
+      updateStepStatus(4, 'completed')
+      setProgressPercentage(100)
+      
+      // Show success message
+      setResult({
+        success: true,
+        message: data.message || "Video generation started! Check your Google Drive in 5-10 minutes for your videos."
+      })
+      setShowResults(true)
+      setIsProcessing(false)
     } catch (err) {
       console.error('Error:', err)
       updateStepStatus(3, 'error')

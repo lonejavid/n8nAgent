@@ -53,6 +53,21 @@ function ResultsSection({ result, error, onReset }) {
           <span>➜</span>
         </a>
       )
+    } else if (result.driveFolder) {
+      return (
+        <a 
+          href={result.driveFolder} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="video-link"
+        >
+          <div className="video-link-text">
+            <span className="video-link-icon">📁</span>
+            <span>Open Google Drive Folder</span>
+          </div>
+          <span>➜</span>
+        </a>
+      )
     }
     return null
   }
