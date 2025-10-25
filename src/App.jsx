@@ -3,7 +3,7 @@ import VideoForm from './components/VideoForm'
 import ProgressSection from './components/ProgressSection'
 import ResultsSection from './components/ResultsSection'
 import FeatureList from './components/FeatureList'
-import { WEBHOOK_URL, STEPS } from './constants'
+import { WEBHOOK_URL, CHECK_STATUS_URL, STEPS } from './constants'
 import './App.css'
 
 function App() {
@@ -58,6 +58,64 @@ function App() {
     }, 8000)
   }
 
+  const pollVideoStatus = async (taskId, checkStatusUrl) => {
+    const maxAttempts = 40 // 40 attempts × 15 seconds = 10 minutes max
+    let attempts = 0
+
+    const checkStatus = async () => {
+      attempts++
+      
+      try {
+        const response = await fetch(checkStatusUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ taskId })
+        })
+
+        if (response.ok) {
+          const statusData = await response.json()
+          console.log('Status check:', statusData)
+
+          if (statusData.data && statusData.data.task_status === 'succeed') {
+            // Video is ready!
+            updateStepStatus(3, 'completed')
+            updateStepStatus(4, 'completed')
+            setProgressPercentage(100)
+            setResult({
+              videoUrl: statusData.data.task_result.videos[0].url,
+              success: true,
+              message: 'Video created successfully!'
+            })
+            setShowResults(true)
+            setIsProcessing(false)
+          } else if (statusData.data && statusData.data.task_status === 'failed') {
+            // Video generation failed
+            throw new Error('Video generation failed')
+          } else if (attempts < maxAttempts) {
+            // Still processing, check again in 15 seconds
+            setTimeout(checkStatus, 15000)
+          } else {
+            // Max attempts reached
+            throw new Error('Video generation timed out')
+          }
+        } else {
+          throw new Error('Failed to check status')
+        }
+      } catch (err) {
+        console.error('Polling error:', err)
+        updateStepStatus(3, 'error')
+        setError('Failed to check video status. Please check your Google Drive.')
+        setShowResults(true)
+        setIsProcessing(false)
+      }
+    }
+
+    // Start checking
+    checkStatus()
+  }
+
   const handleSubmit = async (pageUrl) => {
     setIsProcessing(true)
     setShowProgress(true)
@@ -70,6 +128,10 @@ function App() {
     simulateProgress()
 
     try {
+      // Create abort controller for timeout (10 minutes max)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
+      
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: {
@@ -77,8 +139,11 @@ function App() {
         },
         body: JSON.stringify({
           url: pageUrl  // Send the URL the user entered
-        })
+        }),
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -87,23 +152,33 @@ function App() {
       const data = await response.json()
       console.log('Success:', data)
       
-      // Complete AI generation step
-      updateStepStatus(3, 'completed')
-      updateStepStatus(4, 'active')
-      setCurrentStep(4)
+      // If we got a taskId, start polling for status
+      if (data.taskId) {
+        pollVideoStatus(data.taskId, CHECK_STATUS_URL)
+      } else {
+        // Old flow - immediate result
+        updateStepStatus(3, 'completed')
+        updateStepStatus(4, 'active')
+        setCurrentStep(4)
 
-      // Complete upload step after a delay
-      setTimeout(() => {
-        updateStepStatus(4, 'completed')
-        setProgressPercentage(100)
-        setResult(data)
-        setShowResults(true)
-        setIsProcessing(false)
-      }, 1500)
+        setTimeout(() => {
+          updateStepStatus(4, 'completed')
+          setProgressPercentage(100)
+          setResult(data)
+          setShowResults(true)
+          setIsProcessing(false)
+        }, 1500)
+      }
     } catch (err) {
       console.error('Error:', err)
       updateStepStatus(3, 'error')
-      setError('Failed to process your request. Please check the URL and try again.')
+      
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Video generation is taking longer than expected. Please try again or check your Google Drive later.')
+      } else {
+        setError('Failed to process your request. Please check the URL and try again.')
+      }
+      
       setShowResults(true)
       setIsProcessing(false)
     }
