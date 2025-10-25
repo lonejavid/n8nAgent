@@ -58,55 +58,61 @@ function App() {
     }, 8000)
   }
 
-  const pollVideoStatus = async (taskId, checkStatusUrl) => {
+  const pollVideoStatus = async (requestId) => {
     const maxAttempts = 40 // 40 attempts × 15 seconds = 10 minutes max
     let attempts = 0
 
     const checkStatus = async () => {
       attempts++
+      console.log(`Checking status... attempt ${attempts}/${maxAttempts}`)
       
       try {
-        const response = await fetch(checkStatusUrl, {
+        const response = await fetch(CHECK_STATUS_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ taskId })
+          body: JSON.stringify({ requestId })
         })
 
         if (response.ok) {
           const statusData = await response.json()
-          console.log('Status check:', statusData)
+          console.log('Status check response:', statusData)
 
-          if (statusData.data && statusData.data.task_status === 'succeed') {
+          // Check MongoDB status
+          if (statusData.status === 'completed' && statusData.videoUrl) {
             // Video is ready!
             updateStepStatus(3, 'completed')
             updateStepStatus(4, 'completed')
             setProgressPercentage(100)
             setResult({
-              videoUrl: statusData.data.task_result.videos[0].url,
+              videoUrl: statusData.videoUrl,
               success: true,
               message: 'Video created successfully!'
             })
             setShowResults(true)
             setIsProcessing(false)
-          } else if (statusData.data && statusData.data.task_status === 'failed') {
+          } else if (statusData.status === 'failed') {
             // Video generation failed
             throw new Error('Video generation failed')
-          } else if (attempts < maxAttempts) {
-            // Still processing, check again in 15 seconds
-            setTimeout(checkStatus, 15000)
+          } else if (statusData.status === 'processing') {
+            // Still processing
+            if (attempts < maxAttempts) {
+              console.log('Still processing... checking again in 15 seconds')
+              setTimeout(checkStatus, 15000)
+            } else {
+              throw new Error('Video generation timed out after 10 minutes')
+            }
           } else {
-            // Max attempts reached
-            throw new Error('Video generation timed out')
+            throw new Error('Unknown status: ' + statusData.status)
           }
         } else {
-          throw new Error('Failed to check status')
+          throw new Error(`Status check failed with status: ${response.status}`)
         }
       } catch (err) {
         console.error('Polling error:', err)
         updateStepStatus(3, 'error')
-        setError('Failed to check video status. Please check your Google Drive.')
+        setError(`Failed to check video status: ${err.message}`)
         setShowResults(true)
         setIsProcessing(false)
       }
@@ -128,9 +134,9 @@ function App() {
     simulateProgress()
 
     try {
-      // 2 minute timeout for scraping + starting video generation
+      // Send request to start video generation (should respond immediately with requestId)
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minutes
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout for initial request
       
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
@@ -150,28 +156,26 @@ function App() {
       }
 
       const data = await response.json()
-      console.log('Success:', data)
+      console.log('Initial response:', data)
       
-      // Complete all steps
-      updateStepStatus(3, 'completed')
-      updateStepStatus(4, 'completed')
-      setProgressPercentage(100)
-      
-      // Show success message
-      setResult({
-        success: true,
-        message: data.message || "Video generation started! Check your Google Drive in 5-10 minutes for your videos."
-      })
-      setShowResults(true)
-      setIsProcessing(false)
+      // Check if we got a requestId
+      if (data.requestId) {
+        console.log('Got requestId:', data.requestId)
+        console.log('Starting to poll for status...')
+        
+        // Start polling for status
+        pollVideoStatus(data.requestId)
+      } else {
+        throw new Error('No requestId received from server')
+      }
     } catch (err) {
       console.error('Error:', err)
-      updateStepStatus(3, 'error')
+      updateStepStatus(0, 'error')
       
       if (err.name === 'AbortError') {
-        setError('Request timed out. Video generation is taking longer than expected. Please try again or check your Google Drive later.')
+        setError('Request timed out. Please check your internet connection and try again.')
       } else {
-        setError('Failed to process your request. Please check the URL and try again.')
+        setError(`Failed to start video generation: ${err.message}`)
       }
       
       setShowResults(true)
