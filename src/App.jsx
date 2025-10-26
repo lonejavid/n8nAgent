@@ -3,68 +3,110 @@ import VideoForm from './components/VideoForm'
 import ProgressSection from './components/ProgressSection'
 import ResultsSection from './components/ResultsSection'
 import FeatureList from './components/FeatureList'
-import { WEBHOOK_URL, CHECK_STATUS_URL, STEPS } from './constants'
+import { WEBHOOK_URL_KLING, WEBHOOK_URL_GOOGLE_VEO, CHECK_STATUS_URL, STEPS } from './constants'
 import './App.css'
 
 function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showProgress, setShowProgress] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  const [currentStep, setCurrentStep] = useState(0)
-  const [stepStatuses, setStepStatuses] = useState(
-    STEPS.map(() => 'pending')
-  )
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
-  const [progressPercentage, setProgressPercentage] = useState(0)
+  
+  // Separate state for Google Veo
+  const [veoCurrentStep, setVeoCurrentStep] = useState(0)
+  const [veoStepStatuses, setVeoStepStatuses] = useState(STEPS.map(() => 'pending'))
+  const [veoResult, setVeoResult] = useState(null)
+  const [veoError, setVeoError] = useState(null)
+  const [veoProgressPercentage, setVeoProgressPercentage] = useState(0)
+  
+  // Separate state for Kling
+  const [klingCurrentStep, setKlingCurrentStep] = useState(0)
+  const [klingStepStatuses, setKlingStepStatuses] = useState(STEPS.map(() => 'pending'))
+  const [klingResult, setKlingResult] = useState(null)
+  const [klingError, setKlingError] = useState(null)
+  const [klingProgressPercentage, setKlingProgressPercentage] = useState(0)
 
-  const updateStepStatus = (stepIndex, status) => {
-    setStepStatuses(prev => {
+  // Update step status for Google Veo
+  const updateVeoStepStatus = (stepIndex, status) => {
+    setVeoStepStatuses(prev => {
       const newStatuses = [...prev]
       newStatuses[stepIndex] = status
       return newStatuses
     })
-    
-    // Update progress bar
     const progress = ((stepIndex + 1) / STEPS.length) * 100
-    setProgressPercentage(progress)
+    setVeoProgressPercentage(progress)
   }
 
-  const simulateProgress = () => {
-    // Step 1: Processing URL (immediate)
+  // Update step status for Kling
+  const updateKlingStepStatus = (stepIndex, status) => {
+    setKlingStepStatuses(prev => {
+      const newStatuses = [...prev]
+      newStatuses[stepIndex] = status
+      return newStatuses
+    })
+    const progress = ((stepIndex + 1) / STEPS.length) * 100
+    setKlingProgressPercentage(progress)
+  }
+
+  // Simulate progress for Google Veo
+  const simulateVeoProgress = () => {
     setTimeout(() => {
-      updateStepStatus(0, 'active')
-      setCurrentStep(0)
+      updateVeoStepStatus(0, 'active')
+      setVeoCurrentStep(0)
     }, 500)
     
     setTimeout(() => {
-      updateStepStatus(0, 'completed')
-      updateStepStatus(1, 'active')
-      setCurrentStep(1)
+      updateVeoStepStatus(0, 'completed')
+      updateVeoStepStatus(1, 'active')
+      setVeoCurrentStep(1)
     }, 2000)
 
-    // Step 2: Scraping Images
     setTimeout(() => {
-      updateStepStatus(1, 'completed')
-      updateStepStatus(2, 'active')
-      setCurrentStep(2)
+      updateVeoStepStatus(1, 'completed')
+      updateVeoStepStatus(2, 'active')
+      setVeoCurrentStep(2)
     }, 5000)
 
-    // Step 3: Processing Images
     setTimeout(() => {
-      updateStepStatus(2, 'completed')
-      updateStepStatus(3, 'active')
-      setCurrentStep(3)
+      updateVeoStepStatus(2, 'completed')
+      updateVeoStepStatus(3, 'active')
+      setVeoCurrentStep(3)
     }, 8000)
   }
 
-  const pollVideoStatus = async (requestId) => {
-    const maxAttempts = 100 // 100 attempts × 6 seconds = 10 minutes max
+  // Simulate progress for Kling
+  const simulateKlingProgress = () => {
+    setTimeout(() => {
+      updateKlingStepStatus(0, 'active')
+      setKlingCurrentStep(0)
+    }, 500)
+    
+    setTimeout(() => {
+      updateKlingStepStatus(0, 'completed')
+      updateKlingStepStatus(1, 'active')
+      setKlingCurrentStep(1)
+    }, 2000)
+
+    setTimeout(() => {
+      updateKlingStepStatus(1, 'completed')
+      updateKlingStepStatus(2, 'active')
+      setKlingCurrentStep(2)
+    }, 5000)
+
+    setTimeout(() => {
+      updateKlingStepStatus(2, 'completed')
+      updateKlingStepStatus(3, 'active')
+      setKlingCurrentStep(3)
+    }, 8000)
+  }
+
+  // Poll Google Veo video status (5 seconds interval)
+  const pollVeoVideoStatus = async (requestId) => {
+    const maxAttempts = 120 // 120 attempts × 5 seconds = 10 minutes max
     let attempts = 0
 
     const checkStatus = async () => {
       attempts++
-      console.log(`Checking status... attempt ${attempts}/${maxAttempts}`)
+      console.log(`[Google Veo] Checking status... attempt ${attempts}/${maxAttempts}`)
       
       try {
         const response = await fetch(CHECK_STATUS_URL, {
@@ -77,28 +119,24 @@ function App() {
 
         if (response.ok) {
           const statusData = await response.json()
-          console.log('Status check response:', statusData)
+          console.log('[Google Veo] Status check response:', statusData)
 
-          // Check status from PostgreSQL
           if (statusData.status === 'completed' && statusData.videoUrl) {
             // Video is ready!
-            updateStepStatus(3, 'completed')
-            setProgressPercentage(100)
-            setResult({
+            updateVeoStepStatus(3, 'completed')
+            setVeoProgressPercentage(100)
+            setVeoResult({
               videoUrl: statusData.videoUrl,
               success: true,
               message: 'Video created successfully!'
             })
             setShowResults(true)
-            setIsProcessing(false)
           } else if (statusData.status === 'failed') {
-            // Video generation failed
             throw new Error('Video generation failed')
           } else if (statusData.status === 'processing') {
-            // Still processing
             if (attempts < maxAttempts) {
-              console.log('Still processing... checking again in 6 seconds')
-              setTimeout(checkStatus, 6000)
+              console.log('[Google Veo] Still processing... checking again in 5 seconds')
+              setTimeout(checkStatus, 5000)
             } else {
               throw new Error('Video generation timed out after 10 minutes')
             }
@@ -109,15 +147,71 @@ function App() {
           throw new Error(`Status check failed with status: ${response.status}`)
         }
       } catch (err) {
-        console.error('Polling error:', err)
-        updateStepStatus(3, 'error')
-        setError(`Failed to check video status: ${err.message}`)
+        console.error('[Google Veo] Polling error:', err)
+        updateVeoStepStatus(3, 'error')
+        setVeoError(`Failed to check video status: ${err.message}`)
         setShowResults(true)
-        setIsProcessing(false)
       }
     }
 
-    // Start checking
+    checkStatus()
+  }
+
+  // Poll Kling video status (7 seconds interval)
+  const pollKlingVideoStatus = async (requestId) => {
+    const maxAttempts = 86 // 86 attempts × 7 seconds ≈ 10 minutes max
+    let attempts = 0
+
+    const checkStatus = async () => {
+      attempts++
+      console.log(`[Kling] Checking status... attempt ${attempts}/${maxAttempts}`)
+      
+      try {
+        const response = await fetch(CHECK_STATUS_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ requestId })
+        })
+
+        if (response.ok) {
+          const statusData = await response.json()
+          console.log('[Kling] Status check response:', statusData)
+
+          if (statusData.status === 'completed' && statusData.videoUrl) {
+            // Video is ready!
+            updateKlingStepStatus(3, 'completed')
+            setKlingProgressPercentage(100)
+            setKlingResult({
+              videoUrl: statusData.videoUrl,
+              success: true,
+              message: 'Video created successfully!'
+            })
+            setShowResults(true)
+          } else if (statusData.status === 'failed') {
+            throw new Error('Video generation failed')
+          } else if (statusData.status === 'processing') {
+            if (attempts < maxAttempts) {
+              console.log('[Kling] Still processing... checking again in 7 seconds')
+              setTimeout(checkStatus, 7000)
+            } else {
+              throw new Error('Video generation timed out after 10 minutes')
+            }
+          } else {
+            throw new Error('Unknown status: ' + statusData.status)
+          }
+        } else {
+          throw new Error(`Status check failed with status: ${response.status}`)
+        }
+      } catch (err) {
+        console.error('[Kling] Polling error:', err)
+        updateKlingStepStatus(3, 'error')
+        setKlingError(`Failed to check video status: ${err.message}`)
+        setShowResults(true)
+      }
+    }
+
     checkStatus()
   }
 
@@ -125,98 +219,170 @@ function App() {
     setIsProcessing(true)
     setShowProgress(true)
     setShowResults(false)
-    setError(null)
-    setProgressPercentage(0)
-    setStepStatuses(STEPS.map(() => 'pending'))
+    
+    // Reset all state for both videos
+    setVeoError(null)
+    setKlingError(null)
+    setVeoProgressPercentage(0)
+    setKlingProgressPercentage(0)
+    setVeoStepStatuses(STEPS.map(() => 'pending'))
+    setKlingStepStatuses(STEPS.map(() => 'pending'))
+    setVeoResult(null)
+    setKlingResult(null)
 
-    // Start progress simulation
-    simulateProgress()
+    // Start progress simulation for both
+    simulateVeoProgress()
+    simulateKlingProgress()
 
-    try {
-      // Send request to start video generation (should respond immediately with requestId)
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout for initial request
-      
-      const requestBody = {
-        url: pageUrl  // Send the URL the user entered
-      }
-      
-      console.log('🚀 Sending request to n8n...')
-      console.log('📍 Webhook URL:', WEBHOOK_URL)
-      console.log('📦 Request body:', requestBody)
-      
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal
-      })
-      
-      console.log('📥 Response status:', response.status)
-      console.log('📥 Response headers:', [...response.headers.entries()])
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('❌ Response not OK:', response.status, errorText)
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      // Get the response text first to see what we're getting
-      const responseText = await response.text()
-      console.log('📥 Raw response text:', responseText)
-      
-      // Try to parse it as JSON
-      let data
-      try {
-        data = JSON.parse(responseText)
-        console.log('✅ Parsed JSON data:', data)
-      } catch (jsonError) {
-        console.error('❌ Failed to parse JSON:', jsonError)
-        console.error('❌ Response was:', responseText)
-        throw new Error('Invalid JSON response from server')
-      }
-      
-      // Check if we got a requestId
-      if (data.requestId) {
-        console.log('Got requestId:', data.requestId)
-        console.log('Starting to poll for status...')
-        
-        // Start polling for status
-        pollVideoStatus(data.requestId)
-      } else {
-        throw new Error('No requestId received from server')
-      }
-    } catch (err) {
-      console.error('Error:', err)
-      updateStepStatus(0, 'error')
-      
-      if (err.name === 'AbortError') {
-        setError('Request timed out. Please check your internet connection and try again.')
-      } else {
-        setError(`Failed to start video generation: ${err.message}`)
-      }
-      
-      setShowResults(true)
-      setIsProcessing(false)
+    const requestBody = {
+      url: pageUrl  // Send the URL the user entered
     }
+
+    // Call Google Veo webhook
+    const callGoogleVeo = async () => {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000)
+        
+        console.log('🚀 [Google Veo] Sending request to n8n...')
+        console.log('📍 [Google Veo] Webhook URL:', WEBHOOK_URL_GOOGLE_VEO)
+        console.log('📦 [Google Veo] Request body:', requestBody)
+        
+        const response = await fetch(WEBHOOK_URL_GOOGLE_VEO, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        })
+        
+        console.log('📥 [Google Veo] Response status:', response.status)
+        clearTimeout(timeoutId)
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('❌ [Google Veo] Response not OK:', response.status, errorText)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const responseText = await response.text()
+        console.log('📥 [Google Veo] Raw response text:', responseText)
+        
+        let data
+        try {
+          data = JSON.parse(responseText)
+          console.log('✅ [Google Veo] Parsed JSON data:', data)
+        } catch (jsonError) {
+          console.error('❌ [Google Veo] Failed to parse JSON:', jsonError)
+          throw new Error('Invalid JSON response from server')
+        }
+        
+        if (data.requestId) {
+          console.log('[Google Veo] Got requestId:', data.requestId)
+          console.log('[Google Veo] Starting to poll for status...')
+          pollVeoVideoStatus(data.requestId)
+        } else {
+          throw new Error('No requestId received from server')
+        }
+      } catch (err) {
+        console.error('[Google Veo] Error:', err)
+        updateVeoStepStatus(0, 'error')
+        
+        if (err.name === 'AbortError') {
+          setVeoError('Request timed out. Please check your internet connection and try again.')
+        } else {
+          setVeoError(`Failed to start video generation: ${err.message}`)
+        }
+        setShowResults(true)
+      }
+    }
+
+    // Call Kling webhook
+    const callKling = async () => {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000)
+        
+        console.log('🚀 [Kling] Sending request to n8n...')
+        console.log('📍 [Kling] Webhook URL:', WEBHOOK_URL_KLING)
+        console.log('📦 [Kling] Request body:', requestBody)
+        
+        const response = await fetch(WEBHOOK_URL_KLING, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        })
+        
+        console.log('📥 [Kling] Response status:', response.status)
+        clearTimeout(timeoutId)
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('❌ [Kling] Response not OK:', response.status, errorText)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const responseText = await response.text()
+        console.log('📥 [Kling] Raw response text:', responseText)
+        
+        let data
+        try {
+          data = JSON.parse(responseText)
+          console.log('✅ [Kling] Parsed JSON data:', data)
+        } catch (jsonError) {
+          console.error('❌ [Kling] Failed to parse JSON:', jsonError)
+          throw new Error('Invalid JSON response from server')
+        }
+        
+        if (data.requestId) {
+          console.log('[Kling] Got requestId:', data.requestId)
+          console.log('[Kling] Starting to poll for status...')
+          pollKlingVideoStatus(data.requestId)
+        } else {
+          throw new Error('No requestId received from server')
+        }
+      } catch (err) {
+        console.error('[Kling] Error:', err)
+        updateKlingStepStatus(0, 'error')
+        
+        if (err.name === 'AbortError') {
+          setKlingError('Request timed out. Please check your internet connection and try again.')
+        } else {
+          setKlingError(`Failed to start video generation: ${err.message}`)
+        }
+        setShowResults(true)
+      }
+    }
+
+    // Call both webhooks simultaneously
+    await Promise.all([callGoogleVeo(), callKling()])
   }
 
   const handleReset = () => {
     setIsProcessing(false)
     setShowProgress(false)
     setShowResults(false)
-    setCurrentStep(0)
-    setStepStatuses(STEPS.map(() => 'pending'))
-    setResult(null)
-    setError(null)
-    setProgressPercentage(0)
+    
+    // Reset Google Veo state
+    setVeoCurrentStep(0)
+    setVeoStepStatuses(STEPS.map(() => 'pending'))
+    setVeoResult(null)
+    setVeoError(null)
+    setVeoProgressPercentage(0)
+    
+    // Reset Kling state
+    setKlingCurrentStep(0)
+    setKlingStepStatuses(STEPS.map(() => 'pending'))
+    setKlingResult(null)
+    setKlingError(null)
+    setKlingProgressPercentage(0)
   }
 
-  const isVideoReady = showResults && result?.videoUrl
+  const isVideoReady = showResults && (veoResult?.videoUrl || klingResult?.videoUrl)
 
   return (
     <div className="app">
@@ -238,8 +404,10 @@ function App() {
         {showProgress && !isVideoReady && (
           <ProgressSection 
             steps={STEPS}
-            stepStatuses={stepStatuses}
-            progressPercentage={progressPercentage}
+            veoStepStatuses={veoStepStatuses}
+            veoProgressPercentage={veoProgressPercentage}
+            klingStepStatuses={klingStepStatuses}
+            klingProgressPercentage={klingProgressPercentage}
           />
         )}
 
@@ -253,8 +421,10 @@ function App() {
               </button>
             )}
             <ResultsSection 
-              result={result}
-              error={error}
+              veoResult={veoResult}
+              veoError={veoError}
+              klingResult={klingResult}
+              klingError={klingError}
               onReset={handleReset}
             />
           </>
