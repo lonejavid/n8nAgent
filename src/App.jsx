@@ -227,7 +227,8 @@ function App() {
           disabled={isProcessing}
         />
 
-        {showProgress && (
+        {/* Show progress ONLY while processing and NOT when video is ready */}
+        {showProgress && !(showResults && result?.videoUrl) && (
           <ProgressSection 
             steps={STEPS}
             stepStatuses={stepStatuses}
@@ -243,7 +244,7 @@ function App() {
           />
         )}
 
-        {!showProgress && (
+        {!showProgress && !showResults && (
           <FeatureList />
         )}
       </div>
