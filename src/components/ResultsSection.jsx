@@ -96,9 +96,12 @@ function ResultsSection({ result, error, onReset }) {
           </div>
         )}
         
-        <button className="retry-btn" onClick={onReset}>
-          Generate Another Video
-        </button>
+        {/* Show "Generate Another Video" button only if no video player */}
+        {!result.videoUrl && (
+          <button className="retry-btn" onClick={onReset}>
+            Generate Another Video
+          </button>
+        )}
       </div>
     </div>
   )

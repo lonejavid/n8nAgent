@@ -216,19 +216,26 @@ function App() {
     setProgressPercentage(0)
   }
 
+  const isVideoReady = showResults && result?.videoUrl
+
   return (
     <div className="app">
       <div className="container">
-        <h1>🎬 AI Video Generator</h1>
-        <p className="subtitle">Transform your product images into engaging videos with AI</p>
+        {/* Show header and form ONLY when video is NOT playing */}
+        {!isVideoReady && (
+          <>
+            <h1>🎬 AI Video Generator</h1>
+            <p className="subtitle">Transform your product images into engaging videos with AI</p>
 
-        <VideoForm 
-          onSubmit={handleSubmit} 
-          disabled={isProcessing}
-        />
+            <VideoForm 
+              onSubmit={handleSubmit} 
+              disabled={isProcessing}
+            />
+          </>
+        )}
 
         {/* Show progress ONLY while processing and NOT when video is ready */}
-        {showProgress && !(showResults && result?.videoUrl) && (
+        {showProgress && !isVideoReady && (
           <ProgressSection 
             steps={STEPS}
             stepStatuses={stepStatuses}
@@ -236,12 +243,21 @@ function App() {
           />
         )}
 
+        {/* Show results (with back button when video is ready) */}
         {showResults && (
-          <ResultsSection 
-            result={result}
-            error={error}
-            onReset={handleReset}
-          />
+          <>
+            {isVideoReady && (
+              <button className="back-to-home-btn" onClick={handleReset}>
+                <span className="back-icon">←</span>
+                <span>Back to Home</span>
+              </button>
+            )}
+            <ResultsSection 
+              result={result}
+              error={error}
+              onReset={handleReset}
+            />
+          </>
         )}
 
         {!showProgress && !showResults && (
