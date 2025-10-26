@@ -47,8 +47,8 @@ function ResultsSection({ result, error, onReset }) {
           className="video-link"
         >
           <div className="video-link-text">
-            <span className="video-link-icon">📹</span>
-            <span>View Your Video</span>
+            <span className="video-link-icon">🎬</span>
+            <span>Watch Your Video Here</span>
           </div>
           <span>➜</span>
         </a>
@@ -80,7 +80,7 @@ function ResultsSection({ result, error, onReset }) {
       <div className="result-card">
         <div className="result-title">🎉 Success!</div>
         <div className="result-message">
-          Your video{isMultipleVideos ? 's have' : ' has'} been created and uploaded to Google Drive!
+          Your AI video is ready! Click below to watch it.
         </div>
         {videoLinks && (
           <div className="video-links">
