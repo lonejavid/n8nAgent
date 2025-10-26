@@ -18,8 +18,6 @@ function VideoPlayer({ videoUrl }) {
     <div className="video-player-container">
       <div className="video-frame">
         <video 
-          autoPlay 
-          muted 
           controls 
           className="video-element"
           onLoadedData={() => setIsLoaded(true)}

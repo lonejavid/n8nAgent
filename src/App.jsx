@@ -59,7 +59,7 @@ function App() {
   }
 
   const pollVideoStatus = async (requestId) => {
-    const maxAttempts = 40 // 40 attempts × 15 seconds = 10 minutes max
+    const maxAttempts = 100 // 100 attempts × 6 seconds = 10 minutes max
     let attempts = 0
 
     const checkStatus = async () => {
@@ -97,8 +97,8 @@ function App() {
           } else if (statusData.status === 'processing') {
             // Still processing
             if (attempts < maxAttempts) {
-              console.log('Still processing... checking again in 15 seconds')
-              setTimeout(checkStatus, 15000)
+              console.log('Still processing... checking again in 6 seconds')
+              setTimeout(checkStatus, 6000)
             } else {
               throw new Error('Video generation timed out after 10 minutes')
             }
