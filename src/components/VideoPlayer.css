@@ -9,166 +9,100 @@
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
 .video-player-container {
   width: 100%;
-  max-width: 900px;
-  margin: 2rem auto;
-  animation: fadeInScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  margin: 0;
+  animation: fadeInScale 0.6s ease-out;
 }
 
 .video-frame {
   position: relative;
-  background: linear-gradient(145deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 
-    0 8px 32px rgba(139, 92, 246, 0.3),
-    0 0 0 1px rgba(139, 92, 246, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.video-frame:hover {
-  box-shadow: 
-    0 12px 48px rgba(139, 92, 246, 0.4),
-    0 0 0 1px rgba(139, 92, 246, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.video-frame::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 16px;
-  background: linear-gradient(
-    90deg,
-    rgba(139, 92, 246, 0.1),
-    rgba(59, 130, 246, 0.1),
-    rgba(139, 92, 246, 0.1)
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s infinite;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-}
-
-.video-frame:hover::before {
-  opacity: 0.5;
+  width: 100%;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .video-element {
   width: 100%;
-  border-radius: 12px;
   display: block;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
   background: #000;
-  max-height: 600px;
+  min-height: 400px;
+  max-height: 700px;
   object-fit: contain;
+  border: none;
+}
+
+.google-drive-preview {
+  width: 100%;
+  min-height: 400px;
+  max-height: 700px;
+  background: #000;
+}
+
+.google-drive-preview iframe {
+  width: 100%;
+  min-height: 400px;
+  height: 700px;
+  border: none;
+  display: block;
 }
 
 .video-element::-webkit-media-controls-panel {
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.8));
 }
 
-.download-btn {
-  margin-top: 1.5rem;
+.download-btn,
+.access-btn {
+  margin-top: 1rem;
   width: 100%;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  box-shadow: 
-    0 4px 16px rgba(139, 92, 246, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  gap: 0.5rem;
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
 }
 
-.download-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: left 0.5s;
-}
-
-.download-btn:hover::before {
-  left: 100%;
-}
-
-.download-btn:hover {
+.download-btn:hover,
+.access-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 
-    0 8px 24px rgba(139, 92, 246, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  opacity: 0.9;
 }
 
-.download-btn:active {
+.download-btn:active,
+.access-btn:active {
   transform: translateY(0);
-  box-shadow: 
-    0 2px 8px rgba(139, 92, 246, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.download-icon {
-  font-size: 1.25rem;
-  animation: bounce 2s infinite;
+.download-icon,
+.access-icon {
+  font-size: 1.1rem;
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
+.access-btn {
+  background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .video-player-container {
-    margin: 1.5rem auto;
+  .video-element,
+  .google-drive-preview iframe {
+    min-height: 300px;
+    max-height: 500px;
   }
   
-  .video-frame {
-    padding: 12px;
-  }
-  
-  .download-btn {
-    padding: 0.875rem 1.5rem;
-    font-size: 0.9375rem;
+  .download-btn,
+  .access-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
   }
 }
 

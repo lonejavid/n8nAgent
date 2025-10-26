@@ -1,5 +1,7 @@
 .video-form {
   width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .form-group {
@@ -9,7 +11,7 @@
 label {
   display: block;
   margin-bottom: 8px;
-  color: #333;
+  color: #fff;
   font-weight: 600;
   font-size: 14px;
 }
@@ -17,20 +19,27 @@ label {
 input[type="url"] {
   width: 100%;
   padding: 15px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 10px;
   font-size: 16px;
   transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+input[type="url"]::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 input[type="url"]:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 input[type="url"]:disabled {
-  background-color: #f5f5f5;
+  background-color: rgba(255, 255, 255, 0.05);
   cursor: not-allowed;
 }
 

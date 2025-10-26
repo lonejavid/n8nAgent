@@ -106,7 +106,6 @@ function App() {
 
     const checkStatus = async () => {
       attempts++
-      console.log(`[Google Veo] Checking status... attempt ${attempts}/${maxAttempts}`)
       
       try {
         const response = await fetch(CHECK_STATUS_URL, {
@@ -119,7 +118,6 @@ function App() {
 
         if (response.ok) {
           const statusData = await response.json()
-          console.log('[Google Veo] Status check response:', statusData)
 
           if (statusData.status === 'completed' && statusData.videoUrl) {
             // Video is ready!
@@ -135,7 +133,6 @@ function App() {
             throw new Error('Video generation failed')
           } else if (statusData.status === 'processing') {
             if (attempts < maxAttempts) {
-              console.log('[Google Veo] Still processing... checking again in 5 seconds')
               setTimeout(checkStatus, 5000)
             } else {
               throw new Error('Video generation timed out after 10 minutes')
@@ -147,7 +144,6 @@ function App() {
           throw new Error(`Status check failed with status: ${response.status}`)
         }
       } catch (err) {
-        console.error('[Google Veo] Polling error:', err)
         updateVeoStepStatus(3, 'error')
         setVeoError(`Failed to check video status: ${err.message}`)
         setShowResults(true)
@@ -164,7 +160,6 @@ function App() {
 
     const checkStatus = async () => {
       attempts++
-      console.log(`[Kling] Checking status... attempt ${attempts}/${maxAttempts}`)
       
       try {
         const response = await fetch(CHECK_STATUS_URL, {
@@ -177,7 +172,6 @@ function App() {
 
         if (response.ok) {
           const statusData = await response.json()
-          console.log('[Kling] Status check response:', statusData)
 
           if (statusData.status === 'completed' && statusData.videoUrl) {
             // Video is ready!
@@ -193,7 +187,6 @@ function App() {
             throw new Error('Video generation failed')
           } else if (statusData.status === 'processing') {
             if (attempts < maxAttempts) {
-              console.log('[Kling] Still processing... checking again in 7 seconds')
               setTimeout(checkStatus, 7000)
             } else {
               throw new Error('Video generation timed out after 10 minutes')
@@ -205,7 +198,6 @@ function App() {
           throw new Error(`Status check failed with status: ${response.status}`)
         }
       } catch (err) {
-        console.error('[Kling] Polling error:', err)
         updateKlingStepStatus(3, 'error')
         setKlingError(`Failed to check video status: ${err.message}`)
         setShowResults(true)
@@ -244,10 +236,6 @@ function App() {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 30000)
         
-        console.log('🚀 [Google Veo] Sending request to n8n...')
-        console.log('📍 [Google Veo] Webhook URL:', WEBHOOK_URL_GOOGLE_VEO)
-        console.log('📦 [Google Veo] Request body:', requestBody)
-        
         const response = await fetch(WEBHOOK_URL_GOOGLE_VEO, {
           method: 'POST',
           headers: {
@@ -257,36 +245,28 @@ function App() {
           signal: controller.signal
         })
         
-        console.log('📥 [Google Veo] Response status:', response.status)
         clearTimeout(timeoutId)
 
         if (!response.ok) {
           const errorText = await response.text()
-          console.error('❌ [Google Veo] Response not OK:', response.status, errorText)
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const responseText = await response.text()
-        console.log('📥 [Google Veo] Raw response text:', responseText)
         
         let data
         try {
           data = JSON.parse(responseText)
-          console.log('✅ [Google Veo] Parsed JSON data:', data)
         } catch (jsonError) {
-          console.error('❌ [Google Veo] Failed to parse JSON:', jsonError)
           throw new Error('Invalid JSON response from server')
         }
         
         if (data.requestId) {
-          console.log('[Google Veo] Got requestId:', data.requestId)
-          console.log('[Google Veo] Starting to poll for status...')
           pollVeoVideoStatus(data.requestId)
         } else {
           throw new Error('No requestId received from server')
         }
       } catch (err) {
-        console.error('[Google Veo] Error:', err)
         updateVeoStepStatus(0, 'error')
         
         if (err.name === 'AbortError') {
@@ -304,10 +284,6 @@ function App() {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 30000)
         
-        console.log('🚀 [Kling] Sending request to n8n...')
-        console.log('📍 [Kling] Webhook URL:', WEBHOOK_URL_KLING)
-        console.log('📦 [Kling] Request body:', requestBody)
-        
         const response = await fetch(WEBHOOK_URL_KLING, {
           method: 'POST',
           headers: {
@@ -317,36 +293,28 @@ function App() {
           signal: controller.signal
         })
         
-        console.log('📥 [Kling] Response status:', response.status)
         clearTimeout(timeoutId)
 
         if (!response.ok) {
           const errorText = await response.text()
-          console.error('❌ [Kling] Response not OK:', response.status, errorText)
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const responseText = await response.text()
-        console.log('📥 [Kling] Raw response text:', responseText)
         
         let data
         try {
           data = JSON.parse(responseText)
-          console.log('✅ [Kling] Parsed JSON data:', data)
         } catch (jsonError) {
-          console.error('❌ [Kling] Failed to parse JSON:', jsonError)
           throw new Error('Invalid JSON response from server')
         }
         
         if (data.requestId) {
-          console.log('[Kling] Got requestId:', data.requestId)
-          console.log('[Kling] Starting to poll for status...')
           pollKlingVideoStatus(data.requestId)
         } else {
           throw new Error('No requestId received from server')
         }
       } catch (err) {
-        console.error('[Kling] Error:', err)
         updateKlingStepStatus(0, 'error')
         
         if (err.name === 'AbortError') {

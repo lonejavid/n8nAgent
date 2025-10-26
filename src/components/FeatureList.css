@@ -1,14 +1,17 @@
 .feature-list {
   margin-top: 30px;
   padding-top: 30px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .feature-item {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .feature-icon {

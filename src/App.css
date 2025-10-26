@@ -1,17 +1,12 @@
 .app {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 .container {
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 700px;
   width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 100%;
   animation: slideUp 0.5s ease-out;
 }
 
@@ -27,19 +22,17 @@
 }
 
 h1 {
-  color: #333;
+  color: #fff;
   margin-bottom: 10px;
   font-size: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  text-align: center;
 }
 
 .subtitle {
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 30px;
   font-size: 16px;
+  text-align: center;
 }
 
 .back-to-home-btn {
@@ -47,10 +40,10 @@ h1 {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  color: #8b5cf6;
+  color: #fff;
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -60,10 +53,9 @@ h1 {
 }
 
 .back-to-home-btn:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
-  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: translateX(-4px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
 }
 
 .back-icon {
