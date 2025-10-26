@@ -1,4 +1,5 @@
 import './ResultsSection.css'
+import VideoPlayer from './VideoPlayer'
 
 function ResultsSection({ result, error, onReset }) {
   if (error) {
@@ -82,11 +83,19 @@ function ResultsSection({ result, error, onReset }) {
         <div className="result-message">
           Your AI video is ready! Click below to watch it.
         </div>
-        {videoLinks && (
+        
+        {/* Video Player - Shows when videoUrl is available */}
+        {result.videoUrl && (
+          <VideoPlayer videoUrl={result.videoUrl} />
+        )}
+        
+        {/* Fallback to links if no direct videoUrl */}
+        {!result.videoUrl && videoLinks && (
           <div className="video-links">
             {videoLinks}
           </div>
         )}
+        
         <button className="retry-btn" onClick={onReset}>
           Generate Another Video
         </button>

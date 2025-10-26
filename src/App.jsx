@@ -79,11 +79,10 @@ function App() {
           const statusData = await response.json()
           console.log('Status check response:', statusData)
 
-          // Check MongoDB status
+          // Check status from PostgreSQL
           if (statusData.status === 'completed' && statusData.videoUrl) {
             // Video is ready!
             updateStepStatus(3, 'completed')
-            updateStepStatus(4, 'completed')
             setProgressPercentage(100)
             setResult({
               videoUrl: statusData.videoUrl,

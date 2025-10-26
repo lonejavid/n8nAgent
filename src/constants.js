@@ -25,18 +25,12 @@ export const STEPS = [
     icon: '🎬',
     title: 'Generating AI Video',
     description: 'Creating your video with AI (this may take 5-10 minutes)...'
-  },
-  {
-    id: 'step5',
-    icon: '☁️',
-    title: 'Uploading to Drive',
-    description: 'Saving your video to Google Drive...'
   }
 ]
 
 export const FEATURES = [
   'Automatically extracts images from webpage',
   'Generates AI-powered product videos',
-  'Saves directly to Google Drive'
+  'Watch your video instantly in the browser'
 ]
 
