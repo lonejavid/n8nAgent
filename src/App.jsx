@@ -184,7 +184,7 @@ function App() {
     checkStatus()
   }
 
-  // Poll Kling video status (7 seconds interval)
+  // Poll Kling video status DIRECTLY from Supabase (7 seconds interval)
   const pollKlingVideoStatus = async (requestId) => {
     const maxAttempts = 86 // 86 attempts × 7 seconds ≈ 10 minutes max
     let attempts = 0
@@ -193,40 +193,56 @@ function App() {
       attempts++
       
       try {
-        const response = await fetch(CHECK_STATUS_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ requestId })
-        })
+        // Query Supabase REST API directly
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/video_requests?request_id=eq.${requestId}&select=request_id,status,video_url&limit=1`,
+          {
+            method: 'GET',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+            }
+          }
+        )
 
         if (response.ok) {
-          const statusData = await response.json()
-
-          if (statusData.status === 'completed' && statusData.videoUrl) {
-            // Video is ready!
-            updateKlingStepStatus(3, 'completed')
-            setKlingProgressPercentage(100)
-            setKlingResult({
-              videoUrl: statusData.videoUrl,
-              success: true,
-              message: 'Video created successfully!'
-            })
-            setShowResults(true)
-          } else if (statusData.status === 'failed') {
-            throw new Error('Video generation failed')
-          } else if (statusData.status === 'processing') {
+          const data = await response.json()
+          
+          if (data && data.length > 0) {
+            const row = data[0]
+            
+            if (row.status === 'completed' && row.video_url) {
+              // Video is ready! No delay for Kling (direct video URL)
+              updateKlingStepStatus(3, 'completed')
+              setKlingProgressPercentage(100)
+              setKlingResult({
+                videoUrl: row.video_url,
+                success: true,
+                message: 'Video created successfully!'
+              })
+              setShowResults(true)
+            } else if (row.status === 'failed') {
+              throw new Error('Video generation failed')
+            } else if (row.status === 'processing') {
+              if (attempts < maxAttempts) {
+                setTimeout(checkStatus, 7000)
+              } else {
+                throw new Error('Video generation timed out after 10 minutes')
+              }
+            } else {
+              throw new Error('Unknown status: ' + row.status)
+            }
+          } else {
+            // No data found
             if (attempts < maxAttempts) {
               setTimeout(checkStatus, 7000)
             } else {
-              throw new Error('Video generation timed out after 10 minutes')
+              throw new Error('Video generation timed out - no data found')
             }
-          } else {
-            throw new Error('Unknown status: ' + statusData.status)
           }
         } else {
-          throw new Error(`Status check failed with status: ${response.status}`)
+          throw new Error(`Supabase query failed with status: ${response.status}`)
         }
       } catch (err) {
         updateKlingStepStatus(3, 'error')
