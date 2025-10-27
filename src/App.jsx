@@ -6,6 +6,10 @@ import FeatureList from './components/FeatureList'
 import { WEBHOOK_URL_KLING, WEBHOOK_URL_GOOGLE_VEO, CHECK_STATUS_URL, STEPS } from './constants'
 import './App.css'
 
+// Supabase configuration for Google Veo
+const SUPABASE_URL = 'https://gsprhkvofhfondlnsiqb.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzcHJoa3ZvZmhmb25kbG5zaXFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzMDIwNDUsImV4cCI6MjA2Nzg3ODA0NX0.8ZByLSS423tsU16OM9CpX2h2V2Wt3GOxZUNMF1HIjaU'
+
 function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showProgress, setShowProgress] = useState(false)
@@ -99,7 +103,7 @@ function App() {
     }, 8000)
   }
 
-  // Poll Google Veo video status (5 seconds interval)
+  // Poll Google Veo video status DIRECTLY from Supabase (5 seconds interval)
   const pollVeoVideoStatus = async (requestId) => {
     const maxAttempts = 120 // 120 attempts × 5 seconds = 10 minutes max
     let attempts = 0
@@ -108,40 +112,67 @@ function App() {
       attempts++
       
       try {
-        const response = await fetch(CHECK_STATUS_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ requestId })
-        })
+        // Query Supabase REST API directly
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/video_requests?request_id=eq.${requestId}&select=request_id,status,video_url&limit=1`,
+          {
+            method: 'GET',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+            }
+          }
+        )
 
         if (response.ok) {
-          const statusData = await response.json()
-
-          if (statusData.status === 'completed' && statusData.videoUrl) {
-            // Video is ready!
-            updateVeoStepStatus(3, 'completed')
-            setVeoProgressPercentage(100)
-            setVeoResult({
-              videoUrl: statusData.videoUrl,
-              success: true,
-              message: 'Video created successfully!'
-            })
-            setShowResults(true)
-          } else if (statusData.status === 'failed') {
-            throw new Error('Video generation failed')
-          } else if (statusData.status === 'processing') {
+          const data = await response.json()
+          
+          if (data && data.length > 0) {
+            const row = data[0]
+            
+            if (row.status === 'completed' && row.video_url) {
+              // Video link received! Wait 60 seconds for Google Drive to process it
+              updateVeoStepStatus(3, 'completed')
+              setVeoProgressPercentage(100)
+              setShowResults(true)
+              
+              // Show loading message while waiting for Google Drive processing
+              setVeoResult({
+                videoUrl: null,
+                success: false,
+                message: 'Video generated! Waiting for Google Drive to process it for playback...'
+              })
+              
+              // Wait 60 seconds for Google Drive to process the video
+              setTimeout(() => {
+                setVeoResult({
+                  videoUrl: row.video_url,
+                  success: true,
+                  message: 'Video created successfully!'
+                })
+              }, 60000) // 60 seconds delay
+            } else if (row.status === 'failed') {
+              throw new Error('Video generation failed')
+            } else if (row.status === 'processing') {
+              if (attempts < maxAttempts) {
+                setTimeout(checkStatus, 5000)
+              } else {
+                throw new Error('Video generation timed out after 10 minutes')
+              }
+            } else {
+              throw new Error('Unknown status: ' + row.status)
+            }
+          } else {
+            // No data found
             if (attempts < maxAttempts) {
               setTimeout(checkStatus, 5000)
             } else {
-              throw new Error('Video generation timed out after 10 minutes')
+              throw new Error('Video generation timed out - no data found')
             }
-          } else {
-            throw new Error('Unknown status: ' + statusData.status)
           }
         } else {
-          throw new Error(`Status check failed with status: ${response.status}`)
+          throw new Error(`Supabase query failed with status: ${response.status}`)
         }
       } catch (err) {
         updateVeoStepStatus(3, 'error')

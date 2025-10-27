@@ -53,7 +53,9 @@ function ResultsSection({ veoResult, veoError, klingResult, klingError, onReset 
             ) : (
               <div className="result-card loading">
                 <div className="loading-spinner"></div>
-                <div className="result-message">Generating video...</div>
+                <div className="result-message">
+                  {veoResult?.message || 'Generating video...'}
+                </div>
               </div>
             )}
           </div>

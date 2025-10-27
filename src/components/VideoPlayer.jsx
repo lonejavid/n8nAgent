@@ -1,22 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './VideoPlayer.css'
 
 function VideoPlayer({ videoUrl }) {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   
   // Check if it's a Google Drive link
   const isGoogleDrive = videoUrl.includes('drive.google.com')
-  
-  // Convert Google Drive link to direct download format
-  const getDirectVideoUrl = (url) => {
-    if (isGoogleDrive) {
-      const fileIdMatch = url.match(/\/file\/d\/([^\/]+)/)
-      if (fileIdMatch) {
-        return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`
-      }
+
+  // Auto-retry Google Drive iframe every 30 seconds
+  useEffect(() => {
+    if (isGoogleDrive && retryCount < 10) { // Max 10 retries = 5 minutes
+      const timer = setTimeout(() => {
+        setRetryCount(prev => prev + 1)
+      }, 30000) // 30 seconds
+      
+      return () => clearTimeout(timer)
     }
-    return url
-  }
+  }, [isGoogleDrive, retryCount])
 
   const handleDownload = () => {
     const link = document.createElement('a')
@@ -38,6 +39,7 @@ function VideoPlayer({ videoUrl }) {
         {isGoogleDrive ? (
           <div className="google-drive-preview">
             <iframe
+              key={retryCount} // Force reload on retry
               src={`https://drive.google.com/file/d/${videoUrl.match(/\/file\/d\/([^\/]+)/)?.[1]}/preview`}
               className="video-element"
               allow="autoplay"
