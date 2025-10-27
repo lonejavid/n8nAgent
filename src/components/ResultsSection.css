@@ -65,11 +65,13 @@
 }
 
 .video-result-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 15px;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 18px;
   text-align: center;
   color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
 }
 
 .result-card {

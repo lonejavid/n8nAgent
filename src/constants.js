@@ -1,9 +1,13 @@
-//export const WEBHOOK_URL = 'https://lonejavid.app.n8n.cloud/webhook/generate-video'
-export const WEBHOOK_URL_KLING='https://oneorb.app.n8n.cloud/webhook/generate-video'
-export const WEBHOOK_URL_GOOGLE_VEO='https://oneorb.app.n8n.cloud/webhook/generate-video-google-veo'
-// export const CHECK_STATUS_URL = 'https://lonejavid.app.n8n.cloud/webhook/check-status'
-//export const CHECK_STATUS_URL = 'https://oneorb.app.n8n.cloud/webhook-test/check-status'
-export const CHECK_STATUS_URL ='https://oneorb.app.n8n.cloud/webhook/check-status'
+
+// export const WEBHOOK_URL_KLING='https://oneorb.app.n8n.cloud/webhook/generate-video'
+// export const WEBHOOK_URL_GOOGLE_VEO='https://oneorb.app.n8n.cloud/webhook/generate-video-google-veo'
+
+// export const CHECK_STATUS_URL ='https://oneorb.app.n8n.cloud/webhook/check-status'
+
+export const WEBHOOK_URL_KLING='https://oneorb121.app.n8n.cloud/webhook/generate-vide'
+export const WEBHOOK_URL_GOOGLE_VEO='https://oneorb121.app.n8n.cloud/webhook/generate-video-google-ve'
+
+export const CHECK_STATUS_URL ='https://oneorb121.app.n8n.cloud/webhook/check-status-final'
 export const STEPS = [
   {
     id: 'step1',
